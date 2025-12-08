@@ -75,7 +75,7 @@ func (umc *unmarshalableMessageComponent) UnmarshalJSON(src []byte) error {
 	case LabelComponent:
 		umc.MessageComponent = &Label{}
 	default:
-		return fmt.Errorf("unknown component type: %d", v.Type)
+		umc.MessageComponent = &UnknownComponent{ComponentType: v.Type}
 	}
 	return json.Unmarshal(src, umc.MessageComponent)
 }
@@ -655,4 +655,24 @@ type ResolvedUnfurledMediaItem struct {
 	Width       int    `json:"width"`
 	Height      int    `json:"height"`
 	ContentType string `json:"content_type"`
+}
+
+// UnknownComponent is a component that is unknown to the client.
+type UnknownComponent struct {
+	ComponentType ComponentType
+	Data          json.RawMessage
+}
+
+// Type is a method to get the type of a component.
+func (c UnknownComponent) Type() ComponentType {
+	return c.ComponentType
+}
+
+func (c UnknownComponent) MarshalJSON() ([]byte, error) {
+	return c.Data, nil
+}
+
+// UnmarshalJSON is a method for unmarshaling UnknownComponent from JSON
+func (c *UnknownComponent) UnmarshalJSON(data []byte) error {
+	return json.Unmarshal(data, &c.Data)
 }
